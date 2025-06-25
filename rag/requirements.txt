@@ -1,0 +1,7 @@
+flask
+flask-cors
+requests
+faiss-cpu
+psycopg2-binary
+pytest
+

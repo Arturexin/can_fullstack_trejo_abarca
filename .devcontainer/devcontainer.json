@@ -1,0 +1,41 @@
+// {
+//   "name": "frontend-dev",
+//   "dockerComposeFile": "../docker-compose.yml",
+//   "service": "frontend",
+//   "workspaceFolder": "/app",
+//   "workspaceMount": "source=${localWorkspaceFolder}/frontend,target=/app,type=bind",
+//   "forwardPorts": [5173],
+//   "postCreateCommand": "npm install",
+//   "customizations": {
+//     "vscode": {
+//       "extensions": [
+//         "dbaeumer.vscode-eslint",
+//         "esbenp.prettier-vscode"
+//       ]
+//     }
+//   }
+// }
+{
+  "name": "Dev RAG",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "rag",
+  "workspaceFolder": "/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ]
+    }
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder}/rag,target=/app,type=bind,consistency=cached"
+  ],
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "postCreateCommand": "pip install --no-cache-dir -r requirements.txt"
+}
+

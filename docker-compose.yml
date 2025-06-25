@@ -1,0 +1,109 @@
+version: '3.9'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "9999:5173"
+    depends_on:
+      - hub
+    networks:
+      - app-network
+
+  hub:
+    build: ./hub
+    ports:
+      - "9010:9010"
+    volumes:
+      - ./hub:/app
+    working_dir: /app
+    command: npm run dev
+    networks:
+      - app-network
+
+  scraper:
+    build: ./scraper
+    ports:
+      - "9020:9020"
+    volumes:
+      - ./scraper:/app
+    working_dir: /app
+    command: flask run --host=0.0.0.0 --port=9020
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.py
+      - DB_HOST=postgres
+      - DB_NAME=noticias_db
+      - DB_USER=postgres
+      - DB_PASS=postgres
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - app-network
+
+  rag:
+    build: ./rag
+    ports:
+      - "9030:9030"
+    volumes:
+      - ./rag:/app
+    working_dir: /app
+    command: flask run --host=0.0.0.0 --port=9030
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.py
+      - DB_HOST=postgres
+      - DB_NAME=noticias_db
+      - DB_USER=postgres
+      - DB_PASS=postgres
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+
+  postgres:
+    image: ankane/pgvector
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: noticias_db
+    ports:
+      - "9040:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scraper/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "9050:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - app-network
+
+  scraper_worker:
+    build: ./scraper
+    command: celery -A scraper_tasks worker --loglevel=info
+    depends_on:
+      - scraper
+      - redis
+      - postgres
+    volumes:
+      - ./scraper:/app
+    working_dir: /app
+    networks:
+      - app-network
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  app-network:
+    driver: bridge
